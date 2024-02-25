@@ -39,6 +39,7 @@ resource "aws_lambda_function" "vassopolibot_telegram_adapter" {
   role          = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ExecuteVassopoliBotTelegramAdapter"
   handler       = "bootstrap"
   runtime       = "provided.al2023"
+  source_code_hash = "${base64sha256("main.zip")}"
   
   environment {
     variables = {
