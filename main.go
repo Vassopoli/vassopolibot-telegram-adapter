@@ -19,8 +19,9 @@ type SQSMessageBody struct {
 }
 
 type TelegramSendMessageRequest struct {
-	ChatID string `json:"chat_id"`
-	Text   string `json:"text"`
+	ChatID    string `json:"chat_id"`
+	Text      string `json:"text"`
+	ParseMode string `json:"parse_mode"`
 }
 
 func handler(event events.SQSEvent) error {
@@ -40,7 +41,7 @@ func processMessage(record events.SQSMessage) error {
 	sqsMessageBody := SQSMessageBody{}
 	json.Unmarshal([]byte(record.Body), &sqsMessageBody)
 
-	request := TelegramSendMessageRequest{sqsMessageBody.Receiver, sqsMessageBody.Text}
+	request := TelegramSendMessageRequest{sqsMessageBody.Receiver, sqsMessageBody.Text, "MarkdownV2"}
 	sendMessage(request)
 
 	return nil
