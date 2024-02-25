@@ -14,14 +14,15 @@ import (
 )
 
 type SQSMessageBody struct {
-	Receiver string `json:"receiver"`
-	Text     string `json:"text"`
+	Receiver          string `json:"receiver"`
+	Text              string `json:"text"`
+	IsMarkdownEnabled bool   `json:"isMarkdownEnabled"`
 }
 
 type TelegramSendMessageRequest struct {
 	ChatID    string `json:"chat_id"`
 	Text      string `json:"text"`
-	ParseMode string `json:"parse_mode"`
+	ParseMode string `json:"parse_mode,omitempty"`
 }
 
 func handler(event events.SQSEvent) error {
@@ -41,7 +42,12 @@ func processMessage(record events.SQSMessage) error {
 	sqsMessageBody := SQSMessageBody{}
 	json.Unmarshal([]byte(record.Body), &sqsMessageBody)
 
-	request := TelegramSendMessageRequest{sqsMessageBody.Receiver, sqsMessageBody.Text, "MarkdownV2"}
+	var request TelegramSendMessageRequest
+	if sqsMessageBody.IsMarkdownEnabled {
+		request = TelegramSendMessageRequest{sqsMessageBody.Receiver, sqsMessageBody.Text, "MarkdownV2"}
+	} else {
+		request = TelegramSendMessageRequest{sqsMessageBody.Receiver, sqsMessageBody.Text, ""}
+	}
 	sendMessage(request)
 
 	return nil
