@@ -25,7 +25,7 @@ resource "aws_lambda_function" "vassopolibot_telegram_adapter" {
   filename      = "main.zip"
   function_name = "vassopolibot-telegram-adapter"
   role          = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ExecuteVassopoliBotTelegramAdapter"
-  handler       = "main"
+  handler       = "bootstrap"
   runtime       = "provided.al2023"
 }
 

@@ -19,11 +19,11 @@ jobs:
 
       - uses: actions/setup-go@v3
 
-      - run: go build main.go
+      - run: go build -o bootstrap main.go
 
       - uses: actions/upload-artifact@v3
         with:
-          path: main
+          path: bootstrap
           retention-days: 1
 
   terraform:
@@ -46,7 +46,7 @@ jobs:
           path: terraform
 
       - name: Zip function to upload to AWS Lambda
-        run: zip main.zip main && rm -rf main && ls -R
+        run: zip main.zip bootstrap && rm -rf bootstrap && ls -R
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
