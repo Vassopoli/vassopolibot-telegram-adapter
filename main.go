@@ -1,37 +1,86 @@
 package main
 
 import (
-	"context"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
-	"github.com/gin-gonic/gin"
 )
 
-var ginLambda *ginadapter.GinLambda
-
-func main() {
-	lambda.Start(Handler)
+type SQSMessageBody struct {
+	Receiver string `json:"receiver"`
+	Text     string `json:"text"`
 }
 
-func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	if ginLambda == nil {
-		// stdout and stderr are sent to AWS CloudWatch Logs
-		log.Printf("Gin cold start")
-		r := gin.Default()
-		r.GET("/test", getTest)
+type TelegramSendMessageRequest struct {
+	ChatID string `json:"chat_id"`
+	Text   string `json:"text"`
+}
 
-		ginLambda = ginadapter.New(r)
+func handler(event events.SQSEvent) error {
+	for _, record := range event.Records {
+		err := processMessage(record)
+		if err != nil {
+			return err
+		}
+	}
+	log.Println("done")
+	return nil
+}
+
+func processMessage(record events.SQSMessage) error {
+	log.Printf("Processed message %s\n", record.Body)
+
+	sqsMessageBody := SQSMessageBody{}
+	json.Unmarshal([]byte(record.Body), &sqsMessageBody)
+
+	request := TelegramSendMessageRequest{sqsMessageBody.Receiver, sqsMessageBody.Text}
+	sendMessage(request)
+
+	return nil
+}
+
+func sendMessage(telegramSendMessageRequest TelegramSendMessageRequest) {
+	log.Println("Sending message")
+
+	//TODO: remove this ID
+	url := "https://api.telegram.org/bot" + os.Getenv("APP_TELEGRAM_TOKEN") + "/sendMessage"
+
+	telegramSendMessageRequestJSON, err := json.Marshal(telegramSendMessageRequest)
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(telegramSendMessageRequestJSON)))
+	if err != nil {
+		fmt.Println("Error creating the request")
 	}
 
-	return ginLambda.ProxyWithContext(ctx, req)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending the request")
+	}
+
+	defer resp.Body.Close()
+
+	fmt.Println("Response Status:", resp.Status)
+
+	respBody, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		fmt.Println("Error reading the response body")
+	}
+
+	fmt.Println(string(respBody))
 }
 
-func getTest(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "ok",
-	})
+func main() {
+	lambda.Start(handler)
 }
