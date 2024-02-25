@@ -32,6 +32,7 @@ jobs:
     needs: build
     env:
       tf_actions_working_dir: 'terraform'
+      TF_VAR_app_telegram_token: ${{ secrets.APP_TELEGRAM_TOKEN }}
     defaults:
       run:
         working-directory: ${{ env.tf_actions_working_dir }}

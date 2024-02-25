@@ -18,6 +18,11 @@ provider "aws" {
   region = "us-east-1"
 }
 
+variable "app_telegram_token" {
+  type      = string
+  sensitive = true
+}
+
 data "aws_caller_identity" "current" {}
 
 # data "aws_ssm_parameter" "foo" {
@@ -34,6 +39,12 @@ resource "aws_lambda_function" "vassopolibot_telegram_adapter" {
   role          = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ExecuteVassopoliBotTelegramAdapter"
   handler       = "bootstrap"
   runtime       = "provided.al2023"
+  
+  environment {
+    variables = {
+      APP_TELEGRAM_TOKEN = var.app_telegram_token
+    }
+  }
 }
 
 resource "aws_cloudwatch_log_group" "vassopolibot_telegram_adapter" {
