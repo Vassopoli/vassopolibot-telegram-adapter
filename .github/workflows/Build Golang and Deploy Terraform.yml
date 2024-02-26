@@ -32,7 +32,6 @@ jobs:
     needs: build
     env:
       tf_actions_working_dir: 'terraform'
-      TF_VAR_app_telegram_token: ${{ secrets.APP_TELEGRAM_TOKEN }}
     defaults:
       run:
         working-directory: ${{ env.tf_actions_working_dir }}
@@ -49,16 +48,26 @@ jobs:
       - name: Zip function to upload to AWS Lambda
         run: zip main.zip bootstrap && rm -rf bootstrap && ls -R
 
+      - name: Load secret
+        uses: 1password/load-secrets-action@v1
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          AWS_ROLE_TO_ASSUME: op://Service Account Vault/IAM Role DeployVassopoliBotTelegramAdapter/credential
+          TF_API_TOKEN: op://Service Account Vault/Terraform Team Token/credential
+          TF_VAR_app_telegram_token: op://Service Account Vault/VassopoliBot Telegram Token/credential
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
           aws-region: us-east-1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
 
       - name: Terraform Format
         id: fmt
