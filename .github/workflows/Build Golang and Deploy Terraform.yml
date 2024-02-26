@@ -15,13 +15,13 @@ jobs:
     name: "Build Golang"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v5
 
       - run: go build -o bootstrap main.go
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: bootstrap
           retention-days: 1
@@ -37,10 +37,10 @@ jobs:
         working-directory: ${{ env.tf_actions_working_dir }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download Artifact 
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: artifact
           path: terraform
@@ -59,7 +59,7 @@ jobs:
           TF_VAR_app_telegram_token: op://Service Account Vault/VassopoliBot Telegram Token/credential
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
           aws-region: us-east-1
